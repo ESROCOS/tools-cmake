@@ -470,6 +470,20 @@ macro(sargon_library_common TARGET_NAME)
     sargon_prepare_pkgconfig(${TARGET_NAME} ${TARGET_NAME}_INSTALL)
 endmacro()
 
+# Common setup for static libraries in Sargon. Used by sargon_library_static
+macro(sargon_library_static_common TARGET_NAME)
+    sargon_target_definition(${TARGET_NAME} ${ARGN})
+    # Skip the add_library part if the only thing the caller wants is to install
+    # headers
+    list(LENGTH ${TARGET_NAME}_SOURCES __source_list_size)
+    if (__source_list_size)
+        add_library(${TARGET_NAME} STATIC ${${TARGET_NAME}_SOURCES})
+        sargon_target_setup(${TARGET_NAME})
+        set(${TARGET_NAME}_LIBRARY_HAS_TARGET TRUE)
+    endif()
+    sargon_prepare_pkgconfig(${TARGET_NAME} ${TARGET_NAME}_INSTALL)
+endmacro()
+
 # Install list of headers and keep directory structure
 function(sargon_install_headers HEADER_LIST)
     # Note: using ARGV here, since it expand to the full argument list,
@@ -525,6 +539,26 @@ endfunction()
 # argument is given, this is turned off
 function(sargon_library TARGET_NAME)
     sargon_library_common(${TARGET_NAME} ${ARGN})
+
+    if (${TARGET_NAME}_INSTALL)
+        if (${TARGET_NAME}_LIBRARY_HAS_TARGET)
+            install(TARGETS ${TARGET_NAME}
+                LIBRARY DESTINATION lib
+                # On Windows the dll part of a library is treated as RUNTIME target
+                # and the corresponding import library is treated as ARCHIVE target
+                ARCHIVE DESTINATION lib
+                RUNTIME DESTINATION bin)
+        endif()
+
+        # Install headers and keep directory structure
+        if(${TARGET_NAME}_HEADERS)
+            sargon_install_headers(${${TARGET_NAME}_HEADERS})
+        endif()
+    endif()
+endfunction()
+
+function(sargon_library_static TARGET_NAME)
+    sargon_library_static_common(${TARGET_NAME} ${ARGN})
 
     if (${TARGET_NAME}_INSTALL)
         if (${TARGET_NAME}_LIBRARY_HAS_TARGET)
