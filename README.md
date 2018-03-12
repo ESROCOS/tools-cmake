@@ -1,3 +1,3 @@
-Common CMake code for Sargon libraries
+Common CMake code for ESROCOS libraries
 ====================================
 

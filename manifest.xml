@@ -5,7 +5,7 @@
     </description>
     <author>Javier Hidalgo /javier.hidalgo_carrio@dfki.de</author>
     <copyright>
-        SARGON consortium
+	SARGON/ESROCOS consortium
     </copyright>
     <license>LGPL v2 or later</license>
     <depend package="cmake" />

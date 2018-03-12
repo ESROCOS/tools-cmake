@@ -1,4 +1,4 @@
-macro(sargon_activate_cxx11)
+macro(esrocos_activate_cxx11)
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
     CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -12,7 +12,7 @@ macro(sargon_activate_cxx11)
 endmacro()
 
 
-macro(sargon_use_full_rpath install_rpath)
+macro(esrocos_use_full_rpath install_rpath)
     # use, i.e. don't skip the full RPATH for the build tree
     SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
@@ -28,7 +28,7 @@ macro(sargon_use_full_rpath install_rpath)
     SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endmacro()
 
-function(sargon_add_compiler_flag_if_it_exists FLAG)
+function(esrocos_add_compiler_flag_if_it_exists FLAG)
     string(REGEX REPLACE "[^a-zA-Z]"
         "_" VAR_SUFFIX
         "${FLAG}")
@@ -38,21 +38,21 @@ function(sargon_add_compiler_flag_if_it_exists FLAG)
     endif()
 endfunction()
 
-## Main initialization for Sargon CMake projects
-macro (sargon_init PROJECT_NAME PROJECT_VERSION)
+## Main initialization for ESROCOS CMake projects
+macro (esrocos_init PROJECT_NAME PROJECT_VERSION)
     project(${PROJECT_NAME})
     set(PROJECT_VERSION ${PROJECT_VERSION})
-    sargon_use_full_rpath("${CMAKE_INSTALL_PREFIX}/lib")
+    esrocos_use_full_rpath("${CMAKE_INSTALL_PREFIX}/lib")
     include(CheckCXXCompilerFlag)
     include(FindPkgConfig)
-    if(SARGON_USE_CXX11)
-        sargon_activate_cxx11()
+    if(ESROCOS_USE_CXX11)
+        esrocos_activate_cxx11()
     endif()
-    sargon_add_compiler_flag_if_it_exists(-Wall)
-    sargon_add_compiler_flag_if_it_exists(-Wno-unused-local-typedefs)
+    esrocos_add_compiler_flag_if_it_exists(-Wall)
+    esrocos_add_compiler_flag_if_it_exists(-Wno-unused-local-typedefs)
     add_definitions(-DBASE_LOG_NAMESPACE=${PROJECT_NAME})
 
-    if (SARGON_TEST_ENABLED)
+    if (ESROCOS_TEST_ENABLED)
         enable_testing()
     endif()
 endmacro()
@@ -60,45 +60,45 @@ endmacro()
 # Allow for a global include dir schema by creating symlinks into the source directory
 # Manipulation of the source directory is prevented using individual export
 # directories (e.g. to prevent creating files within already symlinked directories)
-function(sargon_export_includedir DIR TARGET_DIR)
+function(esrocos_export_includedir DIR TARGET_DIR)
     string(REGEX REPLACE / "-" TARGET_INCLUDE_DIR ${TARGET_DIR})
-    set(_SARGON_ADD_INCLUDE_DIR ${PROJECT_BINARY_DIR}/include/_${TARGET_INCLUDE_DIR}_)
-    set(_SARGON_EXPORT_INCLUDE_DIR ${_SARGON_ADD_INCLUDE_DIR}/${TARGET_DIR})
-    if(NOT EXISTS ${_SARGON_EXPORT_INCLUDE_DIR})
+    set(_ESROCOS_ADD_INCLUDE_DIR ${PROJECT_BINARY_DIR}/include/_${TARGET_INCLUDE_DIR}_)
+    set(_ESROCOS_EXPORT_INCLUDE_DIR ${_ESROCOS_ADD_INCLUDE_DIR}/${TARGET_DIR})
+    if(NOT EXISTS ${_ESROCOS_EXPORT_INCLUDE_DIR})
         #get the subdir of the export path
-        get_filename_component(_SARGON_EXPORT_INCLUDE_SUBDIR ${_SARGON_EXPORT_INCLUDE_DIR} PATH)
+        get_filename_component(_ESROCOS_EXPORT_INCLUDE_SUBDIR ${_ESROCOS_EXPORT_INCLUDE_DIR} PATH)
 
         # Making sure we create all required parent directories
-        file(MAKE_DIRECTORY ${_SARGON_EXPORT_INCLUDE_SUBDIR})
+        file(MAKE_DIRECTORY ${_ESROCOS_EXPORT_INCLUDE_SUBDIR})
 
-        execute_process(COMMAND cmake -E create_symlink ${DIR} ${_SARGON_EXPORT_INCLUDE_DIR})
-        if(NOT EXISTS ${_SARGON_EXPORT_INCLUDE_DIR})
-            message(FATAL_ERROR "Export include dir '${DIR}' to '${_SARGON_EXPORT_INCLUDE_DIR}' failed")
+        execute_process(COMMAND cmake -E create_symlink ${DIR} ${_ESROCOS_EXPORT_INCLUDE_DIR})
+        if(NOT EXISTS ${_ESROCOS_EXPORT_INCLUDE_DIR})
+            message(FATAL_ERROR "Export include dir '${DIR}' to '${_ESROCOS_EXPORT_INCLUDE_DIR}' failed")
         endif()
     else()
-        message(STATUS "Export include dir: '${_SARGON_EXPORT_INCLUDE_DIR}' already exists")
+        message(STATUS "Export include dir: '${_ESROCOS_EXPORT_INCLUDE_DIR}' already exists")
     endif()
-    include_directories(BEFORE ${_SARGON_ADD_INCLUDE_DIR})
+    include_directories(BEFORE ${_ESROCOS_ADD_INCLUDE_DIR})
 endfunction()
 
-function(sargon_add_source_dir DIR TARGET_DIR)
+function(esrocos_add_source_dir DIR TARGET_DIR)
     if(IS_ABSOLUTE ${DIR})
-        sargon_export_includedir(${DIR} ${TARGET_DIR})
+        esrocos_export_includedir(${DIR} ${TARGET_DIR})
     else()
-        sargon_export_includedir(${CMAKE_CURRENT_SOURCE_DIR}/${DIR}
+        esrocos_export_includedir(${CMAKE_CURRENT_SOURCE_DIR}/${DIR}
         ${TARGET_DIR})
     endif()
     add_subdirectory(${DIR})
 endfunction()
 
-function(sargon_add_dummy_target_dependency TARGET)
+function(esrocos_add_dummy_target_dependency TARGET)
     if (NOT TARGET ${TARGET})
         add_custom_target(${TARGET})
     endif()
     add_dependencies(${TARGET} ${ARGN})
 endfunction()
 
-macro(sargon_doxygen)
+macro(esrocos_doxygen)
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
         if (DOXYGEN_DOT_EXECUTABLE)
@@ -109,42 +109,42 @@ macro(sargon_doxygen)
         endif(DOXYGEN_DOT_EXECUTABLE)
         configure_file(Doxyfile.in Doxyfile @ONLY)
         add_custom_target(cxx-doc doxygen Doxyfile)
-        sargon_add_dummy_target_dependency(doc cxx-doc)
+        esrocos_add_dummy_target_dependency(doc cxx-doc)
     endif(DOXYGEN_FOUND)
 endmacro()
 
-macro(sargon_standard_layout)
+macro(esrocos_standard_layout)
     if (EXISTS ${PROJECT_SOURCE_DIR}/Doxyfile.in)
-        sargon_doxygen()
+        esrocos_doxygen()
     endif()
 
     if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/src)
-        sargon_add_source_dir(src ${PROJECT_NAME})
+        esrocos_add_source_dir(src ${PROJECT_NAME})
     endif()
 
-    # Test for known types of Sargon subprojects
+    # Test for known types of ESROCOS subprojects
     if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/viz)
-        option(SARGON_VIZ_ENABLED "set to OFF to disable the visualization plugin. Visualization plugins are automatically disabled if Sargon's vizkit3d is not available" ON)
-        if (SARGON_VIZ_ENABLED)
+        option(ESROCOS_VIZ_ENABLED "set to OFF to disable the visualization plugin. Visualization plugins are automatically disabled if ESROCOS's vizkit3d is not available" ON)
+        if (ESROCOS_VIZ_ENABLED)
             if ("${PROJECT_NAME}" STREQUAL vizkit3d)
                 add_subdirectory(viz)
             else()
-                sargon_find_pkgconfig(vizkit3d vizkit3d)
+                esrocos_find_pkgconfig(vizkit3d vizkit3d)
                 if (vizkit3d_FOUND)
                     message(STATUS "vizkit3d found ... building the vizkit3d plugin")
-                    sargon_add_source_dir(viz vizkit3d)
+                    esrocos_add_source_dir(viz vizkit3d)
                 else()
                     message(STATUS "vizkit3d not found ... NOT building the vizkit3d plugin")
                 endif()
             endif()
         else()
-            message(STATUS "visualization plugins disabled as SARGON_VIZ_ENABLED is set to OFF")
+            message(STATUS "visualization plugins disabled as ESROCOS_VIZ_ENABLED is set to OFF")
         endif()
     endif()
 
     if (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/ruby)
         if (EXISTS ${PROJECT_SOURCE_DIR}/ruby/CMakeLists.txt)
-            include(SargonRuby)
+            include(ESROCOSRuby)
             if (RUBY_FOUND)
                 add_subdirectory(ruby)
             endif()
@@ -153,7 +153,7 @@ macro(sargon_standard_layout)
 
     if (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/bindings/ruby)
         if (EXISTS ${PROJECT_SOURCE_DIR}/bindings/ruby/CMakeLists.txt)
-            include(SargonRuby)
+            include(ESROCOSRuby)
             if (RUBY_FOUND)
                 add_subdirectory(bindings/ruby)
             endif()
@@ -167,8 +167,8 @@ macro(sargon_standard_layout)
     endif()
 
     if (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-        option(SARGON_TEST_ENABLED "set to OFF to disable the unit tests. Tests are automatically disabled if the boost unit test framework is not available" ON)
-        if (SARGON_TEST_ENABLED)
+        option(ESROCOS_TEST_ENABLED "set to OFF to disable the unit tests. Tests are automatically disabled if the boost unit test framework is not available" ON)
+        if (ESROCOS_TEST_ENABLED)
             find_package(Boost COMPONENTS unit_test_framework system)
             if (Boost_UNIT_TEST_FRAMEWORK_FOUND)
                 message(STATUS "boost/test found ... building the test suite")
@@ -177,14 +177,14 @@ macro(sargon_standard_layout)
                 message(STATUS "boost/test not found ... NOT building the test suite")
             endif()
         else()
-            message(STATUS "unit tests disabled as SARGON_TEST_ENABLED is set to OFF")
+            message(STATUS "unit tests disabled as ESROCOS_TEST_ENABLED is set to OFF")
         endif()
     endif()
 endmacro()
 
 ## Like pkg_check_modules, but calls include_directories and link_directories
 # using the resulting information
-macro (sargon_find_pkgconfig VARIABLE)
+macro (esrocos_find_pkgconfig VARIABLE)
     if (NOT ${VARIABLE}_FOUND)
         pkg_check_modules(${VARIABLE} ${ARGN})
         foreach(${VARIABLE}_lib ${${VARIABLE}_LIBRARIES})
@@ -205,12 +205,12 @@ endmacro()
 
 ## Like find_package, but calls include_directories and link_directories using
 # the resulting information
-macro (sargon_find_cmake VARIABLE)
+macro (esrocos_find_cmake VARIABLE)
     find_package(${VARIABLE} ${ARGN})
-    sargon_add_plain_dependency(${VARIABLE})
+    esrocos_add_plain_dependency(${VARIABLE})
 endmacro()
 
-macro (sargon_add_plain_dependency VARIABLE)
+macro (esrocos_add_plain_dependency VARIABLE)
     string(TOUPPER ${VARIABLE} UPPER_VARIABLE)
 
     # Normalize uppercase / lowercase
@@ -235,7 +235,7 @@ macro (sargon_add_plain_dependency VARIABLE)
     link_directories(${${VARIABLE}_LIBRARY_DIRS})
 endmacro()
 
-macro (sargon_find_qt4) 
+macro (esrocos_find_qt4) 
     find_package(Qt4 REQUIRED QtCore QtGui QtOpenGl ${ARGN})
     include_directories(${QT_HEADERS_DIR})
     foreach(__qtmodule__ QtCore QtGui QtOpenGl ${ARGN})
@@ -247,13 +247,13 @@ macro (sargon_find_qt4)
 endmacro()
 
 ## Common parsing of parameters for all the C/C++ target types
-macro(sargon_target_definition TARGET_NAME)
+macro(esrocos_target_definition TARGET_NAME)
     set(${TARGET_NAME}_INSTALL ON)
-    set(SARGON_TARGET_AVAILABLE_MODES "SOURCES;HEADERS;DEPS;DEPS_PKGCONFIG;DEPS_CMAKE;DEPS_PLAIN;MOC;UI;LIBS")
+    set(ESROCOS_TARGET_AVAILABLE_MODES "SOURCES;HEADERS;DEPS;DEPS_PKGCONFIG;DEPS_CMAKE;DEPS_PLAIN;MOC;UI;LIBS")
 
     set(${TARGET_NAME}_MODE "SOURCES")
     foreach(ELEMENT ${ARGN})
-        list(FIND SARGON_TARGET_AVAILABLE_MODES "${ELEMENT}" IS_KNOWN_MODE)
+        list(FIND ESROCOS_TARGET_AVAILABLE_MODES "${ELEMENT}" IS_KNOWN_MODE)
         if ("${ELEMENT}" STREQUAL "LIBS")
             set(${TARGET_NAME}_MODE DEPENDENT_LIBS)
         elseif (IS_KNOWN_MODE GREATER -1)
@@ -281,13 +281,13 @@ macro(sargon_target_definition TARGET_NAME)
     endforeach()
     
     foreach (plain_pkg ${${TARGET_NAME}_DEPS_PLAIN} ${${TARGET_NAME}_PUBLIC_PLAIN})
-        sargon_add_plain_dependency(${plain_pkg})
+        esrocos_add_plain_dependency(${plain_pkg})
     endforeach()
     foreach (pkgconfig_pkg ${${TARGET_NAME}_DEPS_PKGCONFIG} ${${TARGET_NAME}_PUBLIC_PKGCONFIG})
-        sargon_find_pkgconfig(${pkgconfig_pkg}_PKGCONFIG REQUIRED ${pkgconfig_pkg})
+        esrocos_find_pkgconfig(${pkgconfig_pkg}_PKGCONFIG REQUIRED ${pkgconfig_pkg})
     endforeach()
     foreach (cmake_pkg ${${TARGET_NAME}_DEPS_CMAKE} ${${TARGET_NAME}_PUBLIC_CMAKE})
-        sargon_find_cmake(${cmake_pkg} REQUIRED)
+        esrocos_find_cmake(${cmake_pkg} REQUIRED)
     endforeach()
 
     # At this stage, if the user did not set public dependency lists
@@ -304,7 +304,7 @@ macro(sargon_target_definition TARGET_NAME)
     string(REPLACE ";" " " ${TARGET_NAME}_PKGCONFIG_REQUIRES "${${TARGET_NAME}_PKGCONFIG_REQUIRES}")
     foreach(dep_mode PLAIN CMAKE)
         foreach(__dep ${${TARGET_NAME}_PUBLIC_${dep_mode}})
-            sargon_libraries_for_pkgconfig(${TARGET_NAME}_PKGCONFIG_LIBS
+            esrocos_libraries_for_pkgconfig(${TARGET_NAME}_PKGCONFIG_LIBS
                 ${${__dep}_LIBRARIES})
             set(${TARGET_NAME}_PKGCONFIG_CFLAGS
                 "${${TARGET_NAME}_PKGCONFIG_CFLAGS} ${${__dep}_CFLAGS_OTHER}")
@@ -317,7 +317,7 @@ macro(sargon_target_definition TARGET_NAME)
 
     list(LENGTH ${TARGET_NAME}_MOC QT_SOURCE_LENGTH)
     if (QT_SOURCE_LENGTH GREATER 0)
-        sargon_find_qt4()
+        esrocos_find_qt4()
         list(APPEND ${TARGET_NAME}_DEPENDENT_LIBS ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY}) 
 
         set(__${TARGET_NAME}_MOC "${${TARGET_NAME}_MOC}")
@@ -352,7 +352,7 @@ macro(sargon_target_definition TARGET_NAME)
 
         list(LENGTH ${TARGET_NAME}_UI QT_UI_LENGTH)
         if (QT_UI_LENGTH GREATER 0)
-            sargon_find_qt4()
+            esrocos_find_qt4()
             QT4_WRAP_UI(${TARGET_NAME}_UI_HDRS ${${TARGET_NAME}_UI})
             include_directories(${CMAKE_CURRENT_BINARY_DIR})
             list(APPEND ${TARGET_NAME}_SOURCES ${${TARGET_NAME}_UI_HDRS})
@@ -361,7 +361,7 @@ macro(sargon_target_definition TARGET_NAME)
 endmacro()
 
 ## Common post-target-definition setup for all C/C++ targets
-macro(sargon_target_setup TARGET_NAME)
+macro(esrocos_target_setup TARGET_NAME)
     set_property(TARGET ${TARGET_NAME}
         PROPERTY DEPS_PUBLIC_PKGCONFIG ${${TARGET_NAME}_PUBLIC_PKGCONFIG})
     set_property(TARGET ${TARGET_NAME}
@@ -390,7 +390,7 @@ endmacro()
 
 ## Defines a new C++ executable
 #
-# sargon_executable(name
+# esrocos_executable(name
 #     SOURCES source.cpp source1.cpp ...
 #     [DEPS target1 target2 target3]
 #     [DEPS_PKGCONFIG pkg1 pkg2 pkg3]
@@ -421,11 +421,11 @@ endmacro()
 # moc.
 # UI: if the library is Qt-based, a list of ui files (only active if moc files are
 # present)
-function(sargon_executable TARGET_NAME)
-    sargon_target_definition(${TARGET_NAME} ${ARGN})
+function(esrocos_executable TARGET_NAME)
+    esrocos_target_definition(${TARGET_NAME} ${ARGN})
 
     add_executable(${TARGET_NAME} ${${TARGET_NAME}_SOURCES})
-    sargon_target_setup(${TARGET_NAME})
+    esrocos_target_setup(${TARGET_NAME})
 
     if (${TARGET_NAME}_INSTALL)
         install(TARGETS ${TARGET_NAME}
@@ -435,7 +435,7 @@ endfunction()
 
 # Trigger the configuration of the pkg-config config file (*.pc.in)
 # Second option allows to select installation of the generated .pc file
-function(sargon_prepare_pkgconfig TARGET_NAME DO_INSTALL)
+function(esrocos_prepare_pkgconfig TARGET_NAME DO_INSTALL)
     foreach(pkgname ${${TARGET_NAME}_PUBLIC_PKGCONFIG})
         set(DEPS_PKGCONFIG "${DEPS_PKGCONFIG} ${pkgname}")
     endforeach()
@@ -455,40 +455,40 @@ function(sargon_prepare_pkgconfig TARGET_NAME DO_INSTALL)
     endif()
 endfunction()
 
-## Common setup for libraries in Sargon. Used by sargon_library and
-# sargon_vizkit_plugin
-macro(sargon_library_common TARGET_NAME)
-    sargon_target_definition(${TARGET_NAME} ${ARGN})
+## Common setup for libraries in ESROCOS. Used by esrocos_library and
+# esrocos_vizkit_plugin
+macro(esrocos_library_common TARGET_NAME)
+    esrocos_target_definition(${TARGET_NAME} ${ARGN})
     # Skip the add_library part if the only thing the caller wants is to install
     # headers
     list(LENGTH ${TARGET_NAME}_SOURCES __source_list_size)
     if (__source_list_size)
         add_library(${TARGET_NAME} SHARED ${${TARGET_NAME}_SOURCES})
-        sargon_target_setup(${TARGET_NAME})
+        esrocos_target_setup(${TARGET_NAME})
         set(${TARGET_NAME}_LIBRARY_HAS_TARGET TRUE)
     endif()
-    sargon_prepare_pkgconfig(${TARGET_NAME} ${TARGET_NAME}_INSTALL)
+    esrocos_prepare_pkgconfig(${TARGET_NAME} ${TARGET_NAME}_INSTALL)
 endmacro()
 
-# Common setup for static libraries in Sargon. Used by sargon_library_static
-macro(sargon_library_static_common TARGET_NAME)
-    sargon_target_definition(${TARGET_NAME} ${ARGN})
+# Common setup for static libraries in ESROCOS. Used by esrocos_library_static
+macro(esrocos_library_static_common TARGET_NAME)
+    esrocos_target_definition(${TARGET_NAME} ${ARGN})
     # Skip the add_library part if the only thing the caller wants is to install
     # headers
     list(LENGTH ${TARGET_NAME}_SOURCES __source_list_size)
     if (__source_list_size)
         add_library(${TARGET_NAME} STATIC ${${TARGET_NAME}_SOURCES})
-        sargon_target_setup(${TARGET_NAME})
+        esrocos_target_setup(${TARGET_NAME})
         set(${TARGET_NAME}_LIBRARY_HAS_TARGET TRUE)
     endif()
-    sargon_prepare_pkgconfig(${TARGET_NAME} ${TARGET_NAME}_INSTALL)
+    esrocos_prepare_pkgconfig(${TARGET_NAME} ${TARGET_NAME}_INSTALL)
 endmacro()
 
 # Install list of headers and keep directory structure
-function(sargon_install_headers HEADER_LIST)
+function(esrocos_install_headers HEADER_LIST)
     # Note: using ARGV here, since it expand to the full argument list,
     # otherwise the function would need to be called with a quoted list, e.g.
-    # sargon_install_headers("${MY_LIST}")
+    # esrocos_install_headers("${MY_LIST}")
     foreach(HEADER ${ARGV})
         string(REGEX MATCH "(.*)[/\\]" DIR ${HEADER})
         install(FILES ${HEADER} DESTINATION include/${PROJECT_NAME}/${DIR})
@@ -497,7 +497,7 @@ endfunction()
 
 ## Defines a new shared library
 #
-# sargon_library(name
+# esrocos_library(name
 #     SOURCES source.cpp source1.cpp ...
 #     [DEPS target1 target2 target3]
 #     [DEPS_PKGCONFIG pkg1 pkg2 pkg3]
@@ -509,7 +509,7 @@ endfunction()
 #
 # Creates and (optionally) installs a shared library.
 #
-# As with all sargon libraries, the target must have a pkg-config file along, that
+# As with all esrocos libraries, the target must have a pkg-config file along, that
 # gets generated and (optionally) installed by the macro. The pkg-config file
 # needs to be in the same directory and called <name>.pc.in
 # 
@@ -537,8 +537,8 @@ endfunction()
 # present)
 # NOINSTALL: by default, the library gets installed on 'make install'. If this
 # argument is given, this is turned off
-function(sargon_library TARGET_NAME)
-    sargon_library_common(${TARGET_NAME} ${ARGN})
+function(esrocos_library TARGET_NAME)
+    esrocos_library_common(${TARGET_NAME} ${ARGN})
 
     if (${TARGET_NAME}_INSTALL)
         if (${TARGET_NAME}_LIBRARY_HAS_TARGET)
@@ -552,13 +552,13 @@ function(sargon_library TARGET_NAME)
 
         # Install headers and keep directory structure
         if(${TARGET_NAME}_HEADERS)
-            sargon_install_headers(${${TARGET_NAME}_HEADERS})
+            esrocos_install_headers(${${TARGET_NAME}_HEADERS})
         endif()
     endif()
 endfunction()
 
-function(sargon_library_static TARGET_NAME)
-    sargon_library_static_common(${TARGET_NAME} ${ARGN})
+function(esrocos_library_static TARGET_NAME)
+    esrocos_library_static_common(${TARGET_NAME} ${ARGN})
 
     if (${TARGET_NAME}_INSTALL)
         if (${TARGET_NAME}_LIBRARY_HAS_TARGET)
@@ -572,14 +572,14 @@ function(sargon_library_static TARGET_NAME)
 
         # Install headers and keep directory structure
         if(${TARGET_NAME}_HEADERS)
-            sargon_install_headers(${${TARGET_NAME}_HEADERS})
+            esrocos_install_headers(${${TARGET_NAME}_HEADERS})
         endif()
     endif()
 endfunction()
 
 ## Defines a new vizkit3d plugin
 #
-# sargon_vizkit_plugin(name
+# esrocos_vizkit_plugin(name
 #     SOURCES source.cpp source1.cpp ...
 #     [DEPS target1 target2 target3]
 #     [DEPS_PKGCONFIG pkg1 pkg2 pkg3]
@@ -589,7 +589,7 @@ endfunction()
 #     [NOINSTALL])
 #
 # Creates and (optionally) installs a shared library that defines a vizkit3d
-# plugin. In Sargon, vizkit3d is the base for data display. Vizkit plugins are
+# plugin. In ESROCOS, vizkit3d is the base for data display. Vizkit plugins are
 # plugins to the 3D display in vizkit3d.
 #
 # The library gets linked against the vizkit3d libraries automatically (no
@@ -618,12 +618,12 @@ endfunction()
 # passed to moc.
 # NOINSTALL: by default, the library gets installed on 'make install'. If this
 # argument is given, this is turned off
-function(sargon_vizkit_plugin TARGET_NAME)
+function(esrocos_vizkit_plugin TARGET_NAME)
     if (${PROJECT_NAME} STREQUAL "vizkit3d")
     else()
         list(APPEND additional_deps DEPS_PKGCONFIG vizkit3d)
     endif()
-    sargon_library_common(${TARGET_NAME} ${ARGN} ${additional_deps})
+    esrocos_library_common(${TARGET_NAME} ${ARGN} ${additional_deps})
     if (${TARGET_NAME}_INSTALL)
         if (${TARGET_NAME}_LIBRARY_HAS_TARGET)
             install(TARGETS ${TARGET_NAME}
@@ -640,7 +640,7 @@ endfunction()
 
 ## Defines a new vizkit widget
 #
-# sargon_vizkit_widget(name
+# esrocos_vizkit_widget(name
 #     SOURCES source.cpp source1.cpp ...
 #     [DEPS target1 target2 target3]
 #     [DEPS_PKGCONFIG pkg1 pkg2 pkg3]
@@ -650,7 +650,7 @@ endfunction()
 #     [NOINSTALL])
 #
 # Creates and (optionally) installs a shared library that defines a vizkit
-# widget. In Sargon, vizkit is the base for data display. Vizkit widgets are
+# widget. In ESROCOS, vizkit is the base for data display. Vizkit widgets are
 # Qt designer widgets that can be seamlessly integrated in the vizkit framework.
 #
 # If a file called <project_name>.rb exists, it is assumed to be a ruby
@@ -685,8 +685,8 @@ endfunction()
 # installed in include/project_name
 # NOINSTALL: by default, the library gets installed on 'make install'. If this
 # argument is given, this is turned off
-function(sargon_vizkit_widget TARGET_NAME)
-    sargon_library_common(${TARGET_NAME} ${ARGN})
+function(esrocos_vizkit_widget TARGET_NAME)
+    esrocos_library_common(${TARGET_NAME} ${ARGN})
     if (${TARGET_NAME}_INSTALL)
         install(TARGETS ${TARGET_NAME}
             LIBRARY DESTINATION lib/qt/designer)
@@ -704,7 +704,7 @@ endfunction()
 
 ## Defines a new C++ test suite
 #
-# sargon_testsuite(name
+# esrocos_testsuite(name
 #     SOURCES source.cpp source1.cpp ...
 #     [DEPS target1 target2 target3]
 #     [DEPS_PKGCONFIG pkg1 pkg2 pkg3]
@@ -731,20 +731,20 @@ endfunction()
 # resulting implementation files are built into the library. If they are source
 # files, they get added to the library and the corresponding header file is
 # passed to moc.
-function(sargon_testsuite TARGET_NAME)
+function(esrocos_testsuite TARGET_NAME)
     if (TARGET_NAME STREQUAL "test")
         message(WARNING "test name cannot be 'test', renaming to '${PROJECT_NAME}-test'")
         set(TARGET_NAME "${PROJECT_NAME}-test")
     endif()
     add_definitions(-DBOOST_TEST_DYN_LINK)
-    sargon_executable(${TARGET_NAME} ${ARGN}
+    esrocos_executable(${TARGET_NAME} ${ARGN}
         NOINSTALL)
     target_link_libraries(${TARGET_NAME} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
     add_test(NAME test-${TARGET_NAME}-cxx
         COMMAND ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
 endfunction()
 
-macro(sargon_libraries_for_pkgconfig VARNAME)
+macro(esrocos_libraries_for_pkgconfig VARNAME)
     foreach(__lib ${ARGN})
         string(STRIP __lib ${__lib})
         string(SUBSTRING ${__lib} 0 1 __lib_is_absolute)
@@ -762,7 +762,7 @@ endmacro()
 ## List dependencies for the given target that are needed by the user of that
 # target
 #
-# sargon_add_public_dependencies(TARGET
+# esrocos_add_public_dependencies(TARGET
 #     [PLAIN] dep0 dep1 dep2
 #     [CMAKE cmake_dep0 cmake_dep1 cmake_dep2]
 #     [PKGCONFIG pkg_dep0 pkg_dep1 pkg_dep2])
@@ -771,7 +771,7 @@ endmacro()
 # before TARGET is defined
 #
 # These dependencies are going to be used automatically in the definition of
-# TARGET, i.e. there is no need to repeat them in e.g. the sargon_library call.
+# TARGET, i.e. there is no need to repeat them in e.g. the esrocos_library call.
 # This method also update the following variables:
 #
 #   ${TARGET_NAME}_PKGCONFIG_REQUIRES
@@ -781,10 +781,10 @@ endmacro()
 # Which can be used in pkg-config files to automatically add the necessary
 # information from these dependencies in the target's pkg-config file
 #
-# Unless you call this, all dependencies listed in the sargon_* macro to create
+# Unless you call this, all dependencies listed in the esrocos_* macro to create
 # the target are public. You only need to call this to restrict the
 # cross-project dependencies
-macro(sargon_add_public_dependencies TARGET_NAME)
+macro(esrocos_add_public_dependencies TARGET_NAME)
     set(MODE PLAIN)
     foreach(__dep ${ARGN})
         if ("${__dep}" STREQUAL "CMAKE")

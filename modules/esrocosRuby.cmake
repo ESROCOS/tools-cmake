@@ -10,10 +10,10 @@
 # Thus, rice needs to be installed. If the extension can be build,
 # the <extension-name>_AVAILABLE will be set.
 #
-# include(SargonRuby)
+# include(ESROCOSRuby)
 # set(SOURCES your_extension.cpp)
 #
-# sargon_ruby_rice_extension(your_extension_ruby ${SOURCES})
+# esrocos_ruby_rice_extension(your_extension_ruby ${SOURCES})
 # if(your_extension_ruby_AVAILABLE)
 #  ...
 #  do additional linking or testing
@@ -28,7 +28,7 @@ if (NOT YARD_FOUND)
     message(STATUS "did not find Yard, the Ruby packages won't generate documentation")
 endif()
 
-# sargon_add_ruby_package(NAME
+# esrocos_add_ruby_package(NAME
 #   [RUBY_FILES rubyfile.rb rubydir]
 #   [EXT_PLAIN|EXT_RICE] extname file1 file2 file3
 #   )
@@ -44,7 +44,7 @@ endif()
 # each extension should be built (using plain Ruby or Rice). extname is the
 # subdirectory of ext/ in which the extension code lies. The extension files
 # are given to the extension directory
-function(sargon_add_ruby_package NAME)
+function(esrocos_add_ruby_package NAME)
     set(mode START)
     set(required OFF)
     set(quiet OFF)
@@ -60,7 +60,7 @@ function(sargon_add_ruby_package NAME)
             set(mode EXT_NAME)
         elseif (mode STREQUAL "EXT_NAME")
             if (NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ext/${arg}")
-                message(FATAL_ERROR "sargon_add_ruby_package: ${arg} was expected to be a subdirectory of ext/, but is not")
+                message(FATAL_ERROR "esrocos_add_ruby_package: ${arg} was expected to be a subdirectory of ext/, but is not")
             endif()
 
             set(extname "${arg}")
@@ -72,7 +72,7 @@ function(sargon_add_ruby_package NAME)
         elseif (mode STREQUAL "EXT_FILES")
             list(APPEND ${extname}_FILES "ext/${extname}/${arg}")
         else()
-            message(FATAL_ERROR "sargon_add_ruby_package: unexpected argument ${arg} in mode '${mode}'")
+            message(FATAL_ERROR "esrocos_add_ruby_package: unexpected argument ${arg} in mode '${mode}'")
         endif()
     endforeach()
 
@@ -92,23 +92,23 @@ function(sargon_add_ruby_package NAME)
     if (${NAME}_AVAILABLE)
         foreach(extname ${extension_names})
             if (${extname}_TYPE STREQUAL "EXT_PLAIN")
-                sargon_ruby_extension(${extname} ${${extname}_FILES})
+                esrocos_ruby_extension(${extname} ${${extname}_FILES})
             elseif (${extname}_TYPE STREQUAL "EXT_RICE")
-                sargon_ruby_rice_extension(${extname} ${${extname}_FILES})
+                esrocos_ruby_rice_extension(${extname} ${${extname}_FILES})
                 set(${NAME}_AVAILABLE ${${extname}_AVAILABLE})
             else()
                 message(FATAL_ERROR "invalid extension type '${${extname}_TYPE}' for '${extname}', expected either EXT_PLAIN or EXT_RICE")
             endif()
         endforeach()
-        sargon_ruby_library(${NAME} ${pure_ruby_files})
+        esrocos_ruby_library(${NAME} ${pure_ruby_files})
 
-        if (SARGON_TEST_ENABLED AND IS_DIRECTORY test)
-            sargon_ruby_test(${NAME})
+        if (ESROCOS_TEST_ENABLED AND IS_DIRECTORY test)
+            esrocos_ruby_test(${NAME})
         endif()
 
         if (YARD_EXECUTABLE)
-            sargon_ruby_doc(${NAME})
-            sargon_add_dummy_target_dependency(doc doc-${NAME}-ruby)
+            esrocos_ruby_doc(${NAME})
+            esrocos_add_dummy_target_dependency(doc doc-${NAME}-ruby)
         endif()
     elseif (required)
         message(FATAL_ERROR "cannot build required Ruby target ${NAME}")
@@ -123,7 +123,7 @@ if (NOT RUBY_FOUND)
     MESSAGE(STATUS "Ruby library not found. Skipping Ruby parts for this package")
 else()
     MESSAGE(STATUS "Ruby library found: ${RUBY_LIBRARY}")
-    function(SARGON_RUBY_LIBRARY libname)
+    function(ESROCOS_RUBY_LIBRARY libname)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${libname}.rb)
             install(FILES ${libname}.rb
                 DESTINATION ${RUBY_LIBRARY_INSTALL_DIR})
@@ -157,30 +157,30 @@ else()
         endforeach()
     endfunction()
 
-    function(SARGON_LOG_MIGRATION)
+    function(ESROCOS_LOG_MIGRATION)
         if (EXISTS ${CMAKE_SOURCE_DIR}/src/log_migration.rb)
             configure_file(${CMAKE_SOURCE_DIR}/src/log_migration.rb
                 ${CMAKE_BINARY_DIR}/log_migration-${PROJECT_NAME}.rb COPYONLY)
             install(FILES ${CMAKE_BINARY_DIR}/log_migration-${PROJECT_NAME}.rb
-                    DESTINATION share/sargon/log/migration)
+                    DESTINATION share/esrocos/log/migration)
         endif()
     endfunction()
 
-    function(SARGON_TYPELIB_RUBY_PLUGIN)
+    function(ESROCOS_TYPELIB_RUBY_PLUGIN)
         install(FILES ${ARGN}
             DESTINATION share/typelib/ruby)
     endfunction()
 
-    function(SARGON_LOG_EXPORT)
+    function(ESROCOS_LOG_EXPORT)
         if (EXISTS ${CMAKE_SOURCE_DIR}/src/log_export.rb)
             configure_file(${CMAKE_SOURCE_DIR}/src/log_export.rb
                 ${CMAKE_BINARY_DIR}/log_export-${PROJECT_NAME}.rb COPYONLY)
             install(FILES ${CMAKE_BINARY_DIR}/log_export-${PROJECT_NAME}.rb
-                    DESTINATION share/sargon/log/export)
+                    DESTINATION share/esrocos/log/export)
         endif()
     endfunction()
 
-    # sargon_ruby_doc(TARGET)
+    # esrocos_ruby_doc(TARGET)
     #
     # Create a target called doc-${TARGET}-ruby that generates the documentation
     # for the Ruby package contained in the current directory, using Yard. The
@@ -189,13 +189,13 @@ else()
     # Add a .yardopts file in the root of the embedded ruby package to configure
     # Yard. See e.g. http://rubydoc.info/gems/yard/YARD/CLI/Yardoc. The output
     # directory is overriden when cmake calls yard
-    function(sargon_ruby_doc TARGET)
+    function(esrocos_ruby_doc TARGET)
         add_custom_target(doc-${TARGET}-ruby
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             ${YARD_EXECUTABLE} doc -o ${PROJECT_BINARY_DIR}/doc/${TARGET})
     endfunction()
 
-    # sargon_ruby_test([FILES] testfile1 [testfile2]
+    # esrocos_ruby_test([FILES] testfile1 [testfile2]
     #   [WORKING_DIRECTORY workdir])
     #
     # Runs the given tests under minitest. The filenames following the FILES
@@ -207,7 +207,7 @@ else()
     # source directory.
     #
     # The default working directory is the current source directory.
-    function(SARGON_RUBY_TEST TARGET)
+    function(ESROCOS_RUBY_TEST TARGET)
         set(workdir ${CMAKE_CURRENT_SOURCE_DIR})
         set(mode FILES)
         foreach(arg ${ARGN})
@@ -221,7 +221,7 @@ else()
             elseif (mode STREQUAL "FILES")
                 list(APPEND test_args "${arg}")
             else()
-                message(FATAL_ERROR "trailing arguments ${arg} to sargon_ruby_test")
+                message(FATAL_ERROR "trailing arguments ${arg} to esrocos_ruby_test")
             endif()
         endforeach()
 
@@ -230,7 +230,7 @@ else()
             if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
                 list(APPEND test_args "${CMAKE_CURRENT_SOURCE_DIR}/test")
             else()
-                message(FATAL_ERROR "sargon_ruby_test: called without test files, and there is no test/ folder")
+                message(FATAL_ERROR "esrocos_ruby_test: called without test files, and there is no test/ folder")
             endif()
         endif()
 
@@ -271,14 +271,14 @@ ELSEIF(NOT RUBY_EXTENSIONS_AVAILABLE)
        OUTPUT_VARIABLE RUBY_CFLAGS)
     STRING(REPLACE "\n" "" RUBY_CFLAGS ${RUBY_CFLAGS})
 
-    function(SARGON_RUBY_EXTENSION target)
+    function(ESROCOS_RUBY_EXTENSION target)
 	INCLUDE_DIRECTORIES(${RUBY_INCLUDE_PATH})
         list(GET ${RUBY_INCLUDE_PATH} 0 rubylib_path)
 	GET_FILENAME_COMPONENT(rubylib_path ${rubylib_path} PATH)
 	LINK_DIRECTORIES(${rubylib_path})
 
 	SET_SOURCE_FILES_PROPERTIES(${ARGN} PROPERTIES COMPILE_FLAGS "${RUBY_CFLAGS}")
-        sargon_library_common(${target} MODULE ${ARGN})
+        esrocos_library_common(${target} MODULE ${ARGN})
         target_link_libraries(${target} ${RUBY_LIBRARY})
 
         STRING(REGEX MATCH "arm.*" ARCH ${CMAKE_SYSTEM_PROCESSOR})
@@ -291,10 +291,10 @@ ELSEIF(NOT RUBY_EXTENSIONS_AVAILABLE)
 	SET_TARGET_PROPERTIES(${target} PROPERTIES PREFIX "")
     endfunction()
 
-    macro(SARGON_RUBY_RICE_EXTENSION target)
+    macro(ESROCOS_RUBY_RICE_EXTENSION target)
         find_package(Gem COMPONENTS rice)
         if (GEM_rice_FOUND)
-            SARGON_RUBY_EXTENSION(${target} ${ARGN})
+            ESROCOS_RUBY_EXTENSION(${target} ${ARGN})
 	    include_directories(${GEM_INCLUDE_DIRS})
 	    target_link_libraries(${target} ${GEM_LIBRARIES})
 
